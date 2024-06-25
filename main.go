@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Constellix/constellix-go-client/client"
-	"github.com/Constellix/constellix-go-client/models"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/Constellix/constellix-go-client/client"
+	"github.com/Constellix/constellix-go-client/models"
 
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	extapi "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -150,11 +151,17 @@ func (c *constellixDNSProviderSolver) CleanUp(ch *v1alpha1.ChallengeRequest) err
 		return err
 	}
 	bodyString := string(bodyBytes)
-	var data map[string]interface{}
+	var data []map[string]interface{}
 	_ = json.Unmarshal([]byte(bodyString), &data)
 
+	recordId, ok := data[0]["id"].(float64)
+	if !ok {
+		fmt.Println("Error asserting type")
+	}
+
+	idStr := fmt.Sprintf("%.0f", recordId)
 	// Delete the TXT Record we created in Present
-	if err = c.constellixClient.DeletebyId("v1/domains/" + id + "/records/txt/" + data["id"].(string)); err != nil {
+	if err = c.constellixClient.DeletebyId("v1/domains/" + id + "/records/txt/" + idStr); err != nil {
 		return err
 	}
 
